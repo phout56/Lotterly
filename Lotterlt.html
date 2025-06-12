@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head><br>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <title>Blockchain Lottery</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <style>
+    body { font-family: Arial; text-align: center; background: #f0f2f5; }
+    .lottery-container { background: white; padding: 30px; margin: 50px auto; border-radius: 10px; width: 400px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; }
+    #numberDisplay { font-size: 48px; margin: 20px 0; letter-spacing: 10px; }
+    #playersList { font-size: 14px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="lottery-container">
+    <h2>🎰 Blockchain Lottery 🎰</h2>
+    <p>Connected Address: <span id="account">Not connected</span></p>
+
+    <div>
+      <button onclick="connectWallet()">Connect Wallet</button>
+      <button onclick="buyTicket()">Buy Ticket (0.002 ETH)</button>
+      <button onclick="drawWinner()">Draw Winner</button>
+    </div>
+
+    <div>
+      <button onclick="startLotteryAnimation()">Start Lottery</button>
+      <div id="numberDisplay">------</div>
+    </div>
+
+    <h4>Players:</h4>
+    <div id="playersList">🎉 Congratulations! You're the lucky winner! 🎉
+We’re thrilled to announce that your number has hit the jackpot!
+          Thank you for playing and enjoy your reward! 🪙💸
+</div>
+  </div>
+
+  <script>
+    let web3;
+    let contract;
+    let account;
+
+    const contractAddress = 'YOUR_CONTRACT_ADDRESS_HERE';
+    const abi = [
+      { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+      { "inputs": [], "name": "buyTicket", "outputs": [], "stateMutability": "payable", "type": "function" },
+      { "inputs": [], "name": "drawWinner", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      { "inputs": [], "name": "getPlayers", "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "ticketPrice", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
+    ];
+
+    async function connectWallet() {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        account = accounts[0];
+        document.getElementById('account').innerText = account;
+        contract = new web3.eth.Contract(abi, contractAddress);
+        loadPlayers();
+      } else {
+        alert('Please install MetaMask!');
+      }
+    }
+
+    async function buyTicket() {
+      await contract.methods.buyTicket().send({ from: account, value: web3.utils.toWei('0.002', 'ether') });
+      loadPlayers();
+    }
+
+    async function drawWinner() {
+      await contract.methods.drawWinner().send({ from: account });
+      loadPlayers();
+      alert('Winner has been drawn!');
+    }
+
+    async function loadPlayers() {
+      const players = await contract.methods.getPlayers().call();
+      document.getElementById('playersList').innerText = players.join('\n');
+    }
+
+    function startLotteryAnimation() {
+      let display = document.getElementById('numberDisplay');
+      let interval = setInterval(() => {
+        display.innerText = Array.from({length: 6}, () => Math.floor(Math.random() * 10)).join('');
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        const result = Array.from({length: 6}, () => Math.floor(Math.random() * 10)).join('');
+        display.innerText = result;
+        alert('ผลหวยของคุณคือ: ' + result);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
